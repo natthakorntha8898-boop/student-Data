@@ -1,1 +1,1119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
 
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>
+ระบบตรวจสอบผลการเรียน
+</title>
+
+<!-- Supabase Library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Chart Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Excel Export -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<!-- PDF Export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
+<style>
+
+/* =====================
+   RESET
+===================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:
+    "Tahoma",
+    "Arial",
+    sans-serif;
+}
+
+
+body{
+
+    background:#f1f5f9;
+
+    color:#333;
+
+}
+
+
+/* =====================
+   LOGIN PAGE
+===================== */
+
+
+#loginPage{
+
+    min-height:100vh;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+
+.login-box{
+
+    width:400px;
+
+    background:white;
+
+    padding:35px;
+
+    border-radius:20px;
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,0.15);
+
+}
+
+
+.login-box h1{
+
+    text-align:center;
+
+    color:#1565c0;
+
+    margin-bottom:20px;
+
+}
+
+
+.login-box p{
+
+    text-align:center;
+
+    margin-bottom:20px;
+
+}
+
+
+
+.input-group{
+
+    margin-bottom:15px;
+
+}
+
+
+.input-group label{
+
+    display:block;
+
+    margin-bottom:5px;
+
+}
+
+
+
+.input-group input,
+select{
+
+
+    width:100%;
+
+    padding:12px;
+
+    border-radius:8px;
+
+    border:1px solid #ccc;
+
+
+}
+
+
+
+.btn{
+
+
+    width:100%;
+
+    padding:12px;
+
+    background:#1565c0;
+
+    color:white;
+
+    border:none;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+}
+
+
+.btn:hover{
+
+    background:#0d47a1;
+
+}
+
+
+
+/* =====================
+   MAIN SYSTEM
+===================== */
+
+
+#systemPage{
+
+    display:none;
+
+}
+
+
+
+/* Sidebar */
+
+
+.sidebar{
+
+
+    position:fixed;
+
+    width:250px;
+
+    height:100vh;
+
+    background:#1565c0;
+
+    color:white;
+
+    padding:20px;
+
+
+}
+
+
+
+.sidebar h2{
+
+    text-align:center;
+
+    margin-bottom:30px;
+
+}
+
+
+
+.menu{
+
+    list-style:none;
+
+}
+
+
+.menu li{
+
+
+    padding:15px;
+
+    cursor:pointer;
+
+    border-radius:8px;
+
+}
+
+
+
+.menu li:hover{
+
+    background:#0d47a1;
+
+}
+
+
+
+/* Content */
+
+
+.content{
+
+
+    margin-left:250px;
+
+    padding:30px;
+
+
+}
+
+
+
+/* Dashboard Cards */
+
+
+.cards{
+
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(200px,1fr));
+
+    gap:20px;
+
+}
+
+
+
+.card{
+
+
+    background:white;
+
+    padding:20px;
+
+    border-radius:15px;
+
+    box-shadow:
+    0 5px 15px rgba(0,0,0,.1);
+
+
+}
+
+
+
+.card h3{
+
+    color:#1565c0;
+
+}
+
+
+
+/* Responsive */
+
+
+@media(max-width:700px){
+
+
+.sidebar{
+
+    position:relative;
+
+    width:100%;
+
+    height:auto;
+
+}
+
+
+.content{
+
+    margin-left:0;
+
+}
+
+
+
+}
+
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+
+<!-- =========================
+LOGIN
+========================= -->
+
+
+<section id="loginPage">
+
+
+<div class="login-box">
+
+
+<h1>
+ระบบจัดการผลการเรียน
+</h1>
+
+
+<p>
+สำหรับครูและนักเรียน
+</p>
+
+
+
+<div class="input-group">
+
+<label>
+ประเภทผู้ใช้งาน
+</label>
+
+
+<select id="role">
+
+<option value="student">
+นักเรียน
+</option>
+
+<option value="teacher">
+ครู
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+<div class="input-group">
+
+<label>
+Email
+</label>
+
+<input 
+id="email"
+type="email"
+placeholder="กรอก Email">
+
+</div>
+
+
+
+<div class="input-group">
+
+<label>
+Password
+</label>
+
+<input
+id="password"
+type="password"
+placeholder="กรอกรหัสผ่าน">
+
+
+</div>
+
+
+
+<button
+class="btn"
+onclick="login()">
+
+เข้าสู่ระบบ
+
+</button>
+
+
+<p id="loginMessage"></p>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+<!-- =========================
+SYSTEM
+========================= -->
+
+
+<section id="systemPage">
+
+
+<div class="sidebar">
+
+
+<h2>
+Student System
+</h2>
+
+
+<ul class="menu">
+
+
+<li>
+🏠 Dashboard
+</li>
+
+
+<li>
+👨‍🎓 นักเรียน
+</li>
+
+
+<li>
+📋 เช็กชื่อ
+</li>
+
+
+<li>
+📚 คะแนน
+</li>
+
+
+<li>
+⚠️ 0 ร มส มผ
+</li>
+
+
+<li>
+📊 รายงาน
+</li>
+
+
+<li onclick="logout()">
+🚪 ออกจากระบบ
+</li>
+
+
+</ul>
+
+
+</div>
+
+
+
+
+
+<div class="content">
+
+
+<h1>
+Dashboard
+</h1>
+
+
+
+<div class="cards">
+
+
+<div class="card">
+
+<h3>
+นักเรียนทั้งหมด
+</h3>
+
+<h1 id="studentCount">
+0
+</h1>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+มาเรียน
+</h3>
+
+<h1 id="presentCount">
+0
+</h1>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+ขาดเรียน
+</h3>
+
+<h1 id="absentCount">
+0
+</h1>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+ติด 0 ร มส มผ
+</h3>
+
+<h1 id="problemCount">
+0
+</h1>
+
+</div>
+
+
+
+</div>
+
+
+<br>
+
+
+<canvas id="chart"></canvas>
+
+
+</div>
+
+
+</section><script>
+
+
+// =====================================
+// SUPABASE CONFIGURATION
+// =====================================
+
+
+// ใส่ URL จาก Supabase ของคุณ
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+
+
+// ใส่ Anon Key จาก Supabase ของคุณ
+const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
+
+
+// สร้างตัวเชื่อมต่อ Supabase
+
+let supabaseClient = null;
+
+
+try{
+
+supabaseClient =
+supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+}
+
+catch(error){
+
+console.log(
+"ยังไม่ได้ตั้งค่า Supabase"
+);
+
+}
+
+
+
+// =====================================
+// LOGIN SYSTEM
+// =====================================
+
+
+async function login(){
+
+
+const email =
+document.getElementById("email").value;
+
+
+const password =
+document.getElementById("password").value;
+
+
+const role =
+document.getElementById("role").value;
+
+
+
+if(
+email === "" ||
+password === ""
+){
+
+
+document.getElementById(
+"loginMessage"
+).innerHTML =
+"กรุณากรอกข้อมูลให้ครบ";
+
+
+return;
+
+}
+
+
+
+
+// ตรวจสอบ Supabase
+
+if(!supabaseClient){
+
+
+document.getElementById(
+"loginMessage"
+).innerHTML =
+"ยังไม่ได้เชื่อมต่อฐานข้อมูล";
+
+
+return;
+
+}
+
+
+
+try{
+
+
+const {
+
+data,
+
+error
+
+}
+
+=
+await supabaseClient.auth.signInWithPassword({
+
+email:email,
+
+password:password
+
+});
+
+
+
+
+if(error){
+
+
+document.getElementById(
+"loginMessage"
+).innerHTML =
+"Email หรือ Password ไม่ถูกต้อง";
+
+
+return;
+
+
+}
+
+
+
+
+// เก็บข้อมูลผู้ใช้
+
+
+localStorage.setItem(
+
+"user",
+
+JSON.stringify({
+
+email:email,
+
+role:role
+
+})
+
+);
+
+
+
+
+// เปิดระบบ
+
+openSystem();
+
+
+
+}
+
+catch(err){
+
+
+console.log(err);
+
+
+}
+
+
+
+}
+
+
+
+
+// =====================================
+// เปิดหน้าระบบ
+// =====================================
+
+
+
+function openSystem(){
+
+
+document.getElementById(
+"loginPage"
+).style.display="none";
+
+
+
+document.getElementById(
+"systemPage"
+).style.display="block";
+
+
+
+loadDashboard();
+
+
+}
+
+
+
+
+
+// =====================================
+// LOGOUT
+// =====================================
+
+
+
+async function logout(){
+
+
+if(supabaseClient){
+
+await supabaseClient.auth.signOut();
+
+}
+
+
+localStorage.removeItem(
+"user"
+);
+
+
+
+document.getElementById(
+"systemPage"
+).style.display="none";
+
+
+
+document.getElementById(
+"loginPage"
+).style.display="flex";
+
+
+}
+
+
+
+
+// =====================================
+// DASHBOARD DATA
+// =====================================
+
+
+
+async function loadDashboard(){
+
+
+
+/*
+
+ข้อมูลส่วนนี้
+จะดึงจากตาราง students
+
+ตัวอย่างฐานข้อมูล
+
+students
+
+id
+student_id
+name
+class
+status
+
+*/
+
+
+
+let total = 0;
+
+let present = 0;
+
+let absent = 0;
+
+let problem = 0;
+
+
+
+if(supabaseClient){
+
+
+
+try{
+
+
+const {
+
+data,
+
+error
+
+}
+
+=
+await supabaseClient
+
+.from("students")
+
+.select("*");
+
+
+
+if(data){
+
+
+
+total = data.length;
+
+
+
+data.forEach(student=>{
+
+
+if(student.attendance === "มา"){
+
+present++;
+
+}
+
+
+if(student.attendance === "ขาด"){
+
+absent++;
+
+}
+
+
+if(
+
+student.status0 > 0 ||
+
+student.status_r > 0 ||
+
+student.status_ms > 0 ||
+
+student.status_mp > 0
+
+){
+
+problem++;
+
+}
+
+
+});
+
+
+}
+
+
+
+}
+
+catch(error){
+
+console.log(error);
+
+}
+
+
+}
+
+
+
+// แสดงผล Dashboard
+
+
+document.getElementById(
+"studentCount"
+).innerHTML =
+total;
+
+
+
+document.getElementById(
+"presentCount"
+).innerHTML =
+present;
+
+
+
+document.getElementById(
+"absentCount"
+).innerHTML =
+absent;
+
+
+
+document.getElementById(
+"problemCount"
+).innerHTML =
+problem;
+
+
+
+createChart(
+
+present,
+
+absent,
+
+problem
+
+);
+
+
+
+}
+
+
+
+
+// =====================================
+// GRAPH
+// =====================================
+
+
+
+function createChart(
+
+present,
+
+absent,
+
+problem
+
+){
+
+
+
+const ctx =
+
+document
+.getElementById("chart");
+
+
+
+new Chart(ctx, {
+
+
+type:"bar",
+
+
+data:{
+
+
+labels:[
+
+"มาเรียน",
+
+"ขาด",
+
+"ติดปัญหา"
+
+],
+
+
+datasets:[{
+
+
+label:"จำนวน",
+
+data:[
+
+present,
+
+absent,
+
+problem
+
+]
+
+
+}]
+
+
+},
+
+
+options:{
+
+
+responsive:true
+
+
+}
+
+
+});
+
+
+}
+
+
+
+
+// =====================================
+// ตรวจสอบ Login เดิม
+// =====================================
+
+
+
+window.onload=function(){
+
+
+
+const user =
+
+localStorage.getItem(
+"user"
+);
+
+
+
+if(user){
+
+
+openSystem();
+
+
+}
+
+
+
+}
+
+
+
+</script>
